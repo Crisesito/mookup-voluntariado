@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Voluntariado | Desafío Levantemos Chile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .brand-blue { color: #00AEEF; }
+        .brand-bg-blue { background-color: #00AEEF; }
+        .brand-bg-gray { background-color: #F0F2F5; }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .main-tab.active {
+            border-color: #00AEEF;
+            color: #00AEEF;
+            background-color: #E6F7FF;
+        }
+        .report-tab.active {
+            border-color: #00AEEF;
+            color: #00AEEF;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="brand-bg-gray min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="w-full max-w-7xl mx-auto">
+        <!-- Pantalla de Selección de Perfil -->
+        <div id="profile-selector-view" class="bg-white p-8 md:p-12 rounded-2xl shadow-xl text-center fade-in max-w-3xl mx-auto">
+            <img src="https://placehold.co/150x150/00AEEF/FFFFFF?text=DLCH" alt="Logo Desafío Levantemos Chile" class="mx-auto mb-6 rounded-full">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Plataforma de Voluntariado</h1>
+            <p class="text-gray-500 mb-8">Selecciona tu perfil para continuar</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <button onclick="showLoginFor('admin')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    <span class="text-2xl">👨‍💼</span>
+                    <span class="block mt-2">Administración</span>
+                </button>
+                <button onclick="showLoginFor('staff')" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    <span class="text-2xl">👩‍💻</span>
+                    <span class="block mt-2">Staff</span>
+                </button>
+                <button onclick="showLoginFor('volunteer')" class="w-full brand-bg-blue hover:bg-sky-600 text-white font-bold py-4 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    <span class="text-2xl">❤️</span>
+                    <span class="block mt-2">Voluntario/a</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Vista de Login -->
+        <div id="login-view" class="hidden bg-white p-8 md:p-12 rounded-2xl shadow-xl text-center fade-in max-w-md mx-auto">
+            <h2 id="login-title" class="text-3xl font-bold text-gray-800 mb-4">Iniciar Sesión</h2>
+            <p class="text-gray-500 mb-8">Ingresa tus credenciales para acceder al panel.</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="space-y-4">
+                    <input id="login-email" type="email" placeholder="correo@ejemplo.com" class="w-full px-4 py-3 border border-gray-300 rounded-lg" required value="admin@dlch.cl">
+                    <input type="password" placeholder="Contraseña" class="w-full px-4 py-3 border border-gray-300 rounded-lg" required value="password123">
+                </div>
+                <button type="submit" id="login-button" class="w-full text-white font-bold py-3 px-6 rounded-lg mt-8 transition-transform transform hover:scale-105">Ingresar</button>
+            </form>
+             <button onclick="showView('profile-selector')" class="mt-4 text-sm text-gray-500 hover:text-blue-600">← Volver a seleccionar perfil</button>
+        </div>
+
+
+        <!-- Vista de Administración -->
+        <div id="admin-view" class="hidden fade-in">
+            <header class="bg-white p-4 rounded-t-2xl shadow-md flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">Panel de Administración</h1>
+                <button onclick="showView('profile-selector')" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Cerrar Sesión</button>
+            </header>
+            <div class="bg-white p-4 border-b">
+                 <div class="flex space-x-4 border-b">
+                    <button class="main-tab py-2 px-4 font-semibold text-gray-600 rounded-t-lg border-b-2 border-transparent" onclick="switchAdminTab(this, 'dashboard')">Dashboard</button>
+                    <button class="main-tab py-2 px-4 font-semibold text-gray-600 rounded-t-lg border-b-2 border-transparent" onclick="switchAdminTab(this, 'management')">Gestión</button>
+                    <button class="main-tab py-2 px-4 font-semibold text-gray-600 rounded-t-lg border-b-2 border-transparent" onclick="switchAdminTab(this, 'reports')">Reportes</button>
+                </div>
+            </div>
+            <main class="bg-white rounded-b-2xl shadow-xl">
+                <div id="admin-dashboard-panel" class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-gray-50 p-6 rounded-xl border"><h3 class="text-lg font-bold text-gray-700 mb-4">Gastos por Tipo</h3><canvas id="expensesChart"></canvas></div>
+                        <div class="bg-gray-50 p-6 rounded-xl border"><h3 class="text-lg font-bold text-gray-700 mb-4">Voluntarios Únicos por Región</h3><canvas id="volunteersChart"></canvas></div>
+                    </div>
+                </div>
+                <div id="admin-management-panel" class="hidden p-6 space-y-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-1 space-y-8">
+                            <div class="bg-gray-50 p-6 rounded-xl border"><h2 class="text-xl font-bold text-gray-700 mb-4">Crear Workshop</h2><form class="space-y-4" id="admin-workshop-form"></form></div>
+                            <div class="bg-gray-50 p-6 rounded-xl border"><h2 class="text-xl font-bold text-gray-700 mb-4">Registrar Gasto</h2><form class="space-y-4" id="admin-expense-form"></form></div>
+                        </div>
+                        <div class="lg:col-span-2 space-y-8">
+                            <div class="bg-white rounded-lg border">
+                                <h2 class="text-xl font-bold text-gray-700 p-4 border-b">Workshops Activos</h2>
+                                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Región</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th></tr></thead><tbody id="workshops-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+                            </div>
+                             <div class="bg-white rounded-lg border">
+                                <h2 class="text-xl font-bold text-gray-700 p-4 border-b">Registro de Cambios (Auditoría)</h2>
+                                <div class="overflow-x-auto max-h-96"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50 sticky top-0"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Acción</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Detalle</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th></tr></thead><tbody id="changelog-table-body" class="bg-white divide-y divide-gray-200"></tbody></table></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="admin-reports-panel" class="hidden p-6"><div id="admin-reports-container"></div></div>
+            </main>
+        </div>
+
+        <!-- Vista de Staff -->
+        <div id="staff-view" class="hidden fade-in">
+             <header class="bg-white p-4 rounded-t-2xl shadow-md flex justify-between items-center"><h1 class="text-2xl font-bold text-gray-800">Panel de Staff</h1><button onclick="showView('profile-selector')" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Cerrar Sesión</button></header>
+            <main class="p-8 bg-white rounded-b-2xl shadow-xl">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1"><div class="bg-gray-50 p-6 rounded-xl border"><h2 class="text-xl font-bold text-gray-700 mb-4 text-center">Registro de Gastos</h2><form class="space-y-4" id="staff-expense-form"></form></div></div>
+                    <div class="lg:col-span-2"><div class="bg-white p-6 rounded-xl border"><h2 class="text-xl font-bold text-gray-700 mb-4">Módulo de Reportes</h2><div id="staff-reports-container"></div></div></div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Vista de Voluntario -->
+        <div id="volunteer-view" class="hidden max-w-2xl mx-auto fade-in">
+             <header class="bg-white p-4 rounded-t-2xl shadow-md flex justify-between items-center"><h1 class="text-2xl font-bold text-gray-800">Portal del Voluntario/a</h1><button onclick="showView('profile-selector')" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Cerrar Sesión</button></header>
+            <main class="p-8 bg-white rounded-b-2xl shadow-xl space-y-8">
+                <div class="bg-gray-50 p-6 rounded-xl border"><h2 class="text-xl font-bold text-gray-700 mb-4 text-center">Cargar Asistencia a Workshop</h2><form class="space-y-4" id="volunteer-attendance-form"></form></div>
+                <div class="bg-gray-50 p-6 rounded-xl border"><h2 class="text-xl font-bold text-gray-700 mb-4 text-center">Formulario de Registro de Gastos</h2><form class="space-y-4" id="volunteer-expense-form"></form></div>
+            </main>
+        </div>
+    </div>
+    
+    <template id="reports-template">
+         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 border rounded-lg bg-gray-50">
+            <div><label class="block text-sm font-medium text-gray-600">Región</label><select class="filter-region mt-1 block w-full p-2 border-gray-300 rounded-md shadow-sm text-sm"></select></div>
+            <div><label class="block text-sm font-medium text-gray-600">Comuna</label><input type="text" placeholder="Ej: Viña del Mar" class="filter-comuna mt-1 block w-full p-2 border-gray-300 rounded-md shadow-sm text-sm"></div>
+            <div><label class="block text-sm font-medium text-gray-600">Voluntario/a</label><select class="filter-volunteer mt-1 block w-full p-2 border-gray-300 rounded-md shadow-sm text-sm"></select></div>
+            <div class="self-end"><button class="w-full brand-bg-blue hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm search-btn">Buscar / Filtrar</button></div>
+        </div>
+        <div class="mb-4 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center">
+                <li class="mr-2"><button class="report-tab inline-block p-4 border-b-2 border-transparent rounded-t-lg" data-tab="expenses">Reporte de Gastos</button></li>
+                <li class="mr-2"><button class="report-tab inline-block p-4 border-b-2 border-transparent rounded-t-lg" data-tab="attendance">Reporte de Asistencia</button></li>
+            </ul>
+        </div>
+        <div class="report-content">
+            <div data-panel="expenses" class="hidden report-panel"><p class="text-center text-gray-500 py-4">Seleccione filtros y busque para ver el reporte de gastos.</p></div>
+            <div data-panel="attendance" class="hidden report-panel"><p class="text-center text-gray-500 py-4">Seleccione filtros y busque para ver el reporte de asistencia.</p></div>
+        </div>
+    </template>
+
+    <script>
+        // --- Base de Datos Ficticia ---
+        const workshopsData = [
+            { id: 1, name: 'Reconstrucción Viña', date: '2025-11-15', region: 'Valparaíso', comuna: 'Viña del Mar', costCenter: 'VIÑA-REC-2025-01' },
+            { id: 2, name: 'Operativo Médico Biobío', date: '2025-10-20', region: 'Biobío', comuna: 'Alto Biobío', costCenter: 'BIO-SALUD-2025-03' },
+            { id: 3, name: 'Apoyo Emprendedores Lo Espejo', date: '2025-12-05', region: 'Metropolitana', comuna: 'Lo Espejo', costCenter: 'RM-EMP-2025-11' },
+            { id: 4, name: 'Limpieza de Playas Coquimbo', date: '2026-01-22', region: 'Coquimbo', comuna: 'La Serena', costCenter: 'COQ-MEDIO-2026-01' }
+        ];
+        const volunteersData = [
+            { id: 101, name: 'Carla Rojas' }, { id: 102, name: 'Benjamín Soto' }, { id: 103, name: 'Valentina Lara' }, { id: 104, name: 'Matias Cornejo'}
+        ];
+        const expensesData = [
+            { id: 1, workshopId: 1, submitterProfile: 'Voluntario', submitterName: 'Carla Rojas', expenseType: 'Transporte', amount: 8500 },
+            { id: 2, workshopId: 2, submitterProfile: 'Staff', submitterName: 'Diego Muñoz', expenseType: 'Materiales', amount: 150000 },
+            { id: 3, workshopId: 1, submitterProfile: 'Admin', submitterName: 'Admin General', expenseType: 'Logística', amount: 320000 },
+            { id: 4, workshopId: 3, submitterProfile: 'Voluntario', submitterName: 'Benjamín Soto', expenseType: 'Alimentación', amount: 12000 },
+            { id: 5, workshopId: 1, submitterProfile: 'Voluntario', submitterName: 'Matias Cornejo', expenseType: 'Materiales', amount: 25000 },
+            { id: 6, workshopId: 4, submitterProfile: 'Staff', submitterName: 'Isidora Paz', expenseType: 'Alojamiento', amount: 80000 },
+        ];
+        const attendanceData = [
+            { volunteerId: 101, workshopId: 1 }, { volunteerId: 101, workshopId: 3 }, { volunteerId: 101, workshopId: 4 },
+            { volunteerId: 102, workshopId: 1 }, { volunteerId: 102, workshopId: 2 },
+            { volunteerId: 103, workshopId: 4 },
+            { volunteerId: 104, workshopId: 1 }, { volunteerId: 104, workshopId: 2 }, { volunteerId: 104, workshopId: 3 }, { volunteerId: 104, workshopId: 4 },
+        ];
+        const changeLogData = [
+            { user: 'admin@dlch.cl', action: 'Creación', target: 'Workshop', detail: 'Limpieza de Playas Coquimbo', timestamp: '2025-09-15 10:05:12' },
+            { user: 'staff@dlch.cl', action: 'Registro Gasto', target: 'Workshop: Operativo Médico Biobío', detail: 'Materiales por $150.000', timestamp: '2025-09-28 14:22:01' },
+            { user: 'admin@dlch.cl', action: 'Edición', target: 'Workshop', detail: 'Cambió fecha de "Reconstrucción Viña"', timestamp: '2025-10-01 09:30:45' },
+            { user: 'voluntario@dlch.cl', action: 'Registro Gasto', target: 'Workshop: Apoyo Emprendedores', detail: 'Alimentación por $12.000', timestamp: '2025-10-02 18:01:56' },
+            { user: 'admin@dlch.cl', action: 'Borrado', target: 'Gasto', detail: 'ID Gasto #198 (Duplicado)', timestamp: '2025-10-03 11:15:00' },
+        ];
+
+
+        // --- Lógica de la Aplicación ---
+        let currentProfile = null;
+        let chartInstances = {};
+        const views = ['profile-selector', 'login', 'admin', 'staff', 'volunteer'];
+        
+        function showView(viewName) {
+            views.forEach(v => document.getElementById(`${v}-view`).classList.add('hidden'));
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+        }
+
+        function showLoginFor(profile) {
+            currentProfile = profile;
+            const titles = { admin: 'Admin', staff: 'Staff', volunteer: 'Voluntario/a' };
+            const colors = { admin: 'bg-blue-600', staff: 'bg-green-500', volunteer: 'brand-bg-blue' };
+            const emails = { admin: 'admin@dlch.cl', staff: 'staff@dlch.cl', volunteer: 'voluntario@dlch.cl'};
+            
+            document.getElementById('login-title').innerText = `Iniciar Sesión (${titles[profile]})`;
+            document.getElementById('login-email').value = emails[profile];
+            const loginButton = document.getElementById('login-button');
+            loginButton.className = `w-full text-white font-bold py-3 px-6 rounded-lg mt-8 transition-transform transform hover:scale-105 ${colors[profile]}`;
+            
+            showView('login');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            if (currentProfile) {
+                showView(currentProfile);
+            }
+        }
+        
+        function switchAdminTab(button, tabName) {
+            document.querySelectorAll('.main-tab').forEach(tab => tab.classList.remove('active'));
+            button.classList.add('active');
+            
+            const panelNames = ['dashboard', 'management', 'reports'];
+            panelNames.forEach(panel => {
+                document.getElementById(`admin-${panel}-panel`).classList.add('hidden');
+            });
+
+            document.getElementById(`admin-${tabName}-panel`).classList.remove('hidden');
+            if (tabName === 'dashboard') renderCharts();
+        }
+
+        function populateWorkshopsTable() {
+            const tableBody = document.getElementById('workshops-table-body');
+            tableBody.innerHTML = '';
+            workshopsData.forEach(ws => {
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${ws.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${ws.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${ws.region}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                             <button class="text-blue-600 hover:text-blue-900 text-xs font-semibold">EDITAR</button>
+                             <button class="text-red-600 hover:text-red-900 ml-4 text-xs font-semibold">BORRAR</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+        
+        function populateChangeLogTable() {
+            const tableBody = document.getElementById('changelog-table-body');
+            tableBody.innerHTML = '';
+            changeLogData.slice().reverse().forEach(log => {
+                 tableBody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 text-sm">${log.user}</td>
+                        <td class="px-4 py-2 text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${log.action === 'Creación' ? 'bg-green-100 text-green-800' : log.action === 'Edición' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}">${log.action}</span></td>
+                        <td class="px-4 py-2 text-sm">${log.detail}</td>
+                        <td class="px-4 py-2 text-sm text-gray-500">${log.timestamp}</td>
+                    </tr>`;
+            });
+        }
+
+        function initReportsModule(containerId) {
+            const container = document.getElementById(containerId);
+            const template = document.getElementById('reports-template');
+            container.innerHTML = '';
+            container.appendChild(template.content.cloneNode(true));
+            
+            populateSelects(container.querySelector('.filter-region'), [...new Set(workshopsData.map(w => w.region))].map(r => ({val: r, txt: r})), 'val', 'txt', 'Todas las regiones');
+            populateSelects(container.querySelector('.filter-volunteer'), volunteersData, 'id', 'name', 'Todos los voluntarios');
+            
+            container.querySelector('.search-btn').addEventListener('click', () => applyFiltersAndRenderReports(container));
+            
+            container.querySelectorAll('.report-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    container.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    container.querySelectorAll('.report-panel').forEach(p => p.classList.add('hidden'));
+                    container.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.remove('hidden');
+                });
+            });
+            container.querySelector('.report-tab').click();
+        }
+
+        function applyFiltersAndRenderReports(container) {
+            const filters = {
+                region: container.querySelector('.filter-region').value,
+                comuna: container.querySelector('.filter-comuna').value.toLowerCase(),
+                volunteerId: container.querySelector('.filter-volunteer').value,
+            };
+            renderExpenseReport(container.querySelector('[data-panel="expenses"]'), filters);
+            renderAttendanceReport(container.querySelector('[data-panel="attendance"]'), filters);
+        }
+
+        function renderExpenseReport(container, filters) {
+             let filteredExpenses = expensesData.map(expense => ({...expense, workshop: workshopsData.find(w => w.id === expense.workshopId)}));
+            if (filters.region) filteredExpenses = filteredExpenses.filter(e => e.workshop.region === filters.region);
+            if (filters.comuna) filteredExpenses = filteredExpenses.filter(e => e.workshop.comuna.toLowerCase().includes(filters.comuna));
+            if (filters.volunteerId) filteredExpenses = filteredExpenses.filter(e => e.submitterProfile === 'Voluntario' && volunteersData.find(v => v.id == filters.volunteerId)?.name === e.submitterName);
+            
+            if (filteredExpenses.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 py-4">No se encontraron gastos con los filtros aplicados.</p>`; return;
+            }
+            let tableHTML = `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Workshop</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Registrado por</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Perfil</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th><th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Monto</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+            filteredExpenses.forEach(e => { tableHTML += `<tr><td class="px-4 py-2 whitespace-nowrap text-sm">${e.workshop.name} (${e.workshop.region})</td><td class="px-4 py-2 whitespace-nowrap text-sm">${e.submitterName}</td><td class="px-4 py-2 whitespace-nowrap text-sm"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${e.submitterProfile === 'Admin' ? 'bg-blue-100 text-blue-800' : e.submitterProfile === 'Staff' ? 'bg-green-100 text-green-800' : 'bg-sky-100 text-sky-800'}">${e.submitterProfile}</span></td><td class="px-4 py-2 whitespace-nowrap text-sm">${e.expenseType}</td><td class="px-4 py-2 whitespace-nowrap text-sm text-right font-medium">$${e.amount.toLocaleString('es-CL')}</td></tr>`; });
+            tableHTML += `</tbody></table></div>`;
+            container.innerHTML = tableHTML;
+        }
+
+        function renderAttendanceReport(container, filters) {
+            let filteredVolunteers = [...volunteersData];
+            if (filters.volunteerId) filteredVolunteers = filteredVolunteers.filter(v => v.id == filters.volunteerId);
+            if (filters.region || filters.comuna) {
+                const workshopIdsInLocation = workshopsData.filter(w => (!filters.region || w.region === filters.region) && (!filters.comuna || w.comuna.toLowerCase().includes(filters.comuna))).map(w => w.id);
+                filteredVolunteers = filteredVolunteers.filter(v => attendanceData.some(a => a.volunteerId === v.id && workshopIdsInLocation.includes(a.workshopId)));
+            }
+            if (filteredVolunteers.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500 py-4">No se encontraron voluntarios con los filtros aplicados.</p>`; return;
+            }
+            let tableHTML = `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nombre Voluntario/a</th><th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Workshops Asistidos</th><th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Total Workshops</th><th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+            const totalWorkshops = workshopsData.length;
+            filteredVolunteers.forEach(v => {
+                const attendedCount = attendanceData.filter(a => a.volunteerId === v.id).length;
+                const percentage = totalWorkshops > 0 ? ((attendedCount / totalWorkshops) * 100).toFixed(0) : 0;
+                tableHTML += `<tr><td class="px-4 py-2 whitespace-nowrap text-sm font-medium">${v.name}</td><td class="px-4 py-2 whitespace-nowrap text-sm text-center">${attendedCount}</td><td class="px-4 py-2 whitespace-nowrap text-sm text-center">${totalWorkshops}</td><td class="px-4 py-2 whitespace-nowrap text-sm text-center font-bold">${percentage}%</td></tr>`;
+            });
+            tableHTML += `</tbody></table></div>`;
+            container.innerHTML = tableHTML;
+        }
+        
+        function renderCharts() {
+            if (chartInstances.expensesChart) chartInstances.expensesChart.destroy();
+            if (chartInstances.volunteersChart) chartInstances.volunteersChart.destroy();
+
+            const expenseCtx = document.getElementById('expensesChart').getContext('2d');
+            const expenseTypes = [...new Set(expensesData.map(e => e.expenseType))];
+            const expenseDataValues = expenseTypes.map(type => expensesData.filter(e => e.expenseType === type).reduce((sum, e) => sum + e.amount, 0));
+            chartInstances.expensesChart = new Chart(expenseCtx, {type: 'doughnut', data: {labels: expenseTypes, datasets: [{label: 'Total Gastos', data: expenseDataValues, backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'], hoverOffset: 4}]}, options: { responsive: true, maintainAspectRatio: false }});
+
+            const volunteerCtx = document.getElementById('volunteersChart').getContext('2d');
+            const regions = [...new Set(workshopsData.map(w => w.region))];
+            const volunteerCounts = regions.map(region => {
+                const workshopIdsInRegion = workshopsData.filter(w => w.region === region).map(w => w.id);
+                return new Set(attendanceData.filter(a => workshopIdsInRegion.includes(a.workshopId)).map(a => a.volunteerId)).size;
+            });
+            chartInstances.volunteersChart = new Chart(volunteerCtx, {type: 'bar', data: {labels: regions, datasets: [{label: 'Nº de Voluntarios Únicos', data: volunteerCounts, backgroundColor: '#00AEEF'}]}, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }});
+        }
+        
+        function populateAllForms() {
+            const adminWorkshopForm = `<div><label class="block text-sm font-medium text-gray-600">Nombre</label><input type="text" value="Reconstrucción Post-Incendio" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></div><div><label class="block text-sm font-medium text-gray-600">Encargado/a</label><input type="text" value="Catalina Rojas" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></div><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-gray-600">Fecha</label><input type="date" value="2025-11-15" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></div><div><label class="block text-sm font-medium text-gray-600">Centro Costo</label><input type="text" value="VIÑA-REC-2025-01" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></div></div><button type="submit" class="w-full brand-bg-blue hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg">Crear</button>`;
+            const expenseFormHTML = (idPrefix) => `<div><label class="block text-sm font-medium text-gray-600">Workshop Asociado</label><select id="${idPrefix}-ws-select" onchange="updateCostCenter(this.value, '${idPrefix}-cost-center')" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></select></div><div><label class="block text-sm font-medium text-gray-600">Centro de Costo</label><input type="text" id="${idPrefix}-cost-center" readonly class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md cursor-not-allowed"></div><div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-medium text-gray-600">Tipo de Gasto</label><select class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md"><option>Transporte</option><option>Alimentación</option><option>Materiales</option></select></div><div><label class="block text-sm font-medium text-gray-600">Monto</label><div class="relative mt-1"><span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span><input type="number" placeholder="0" class="block w-full rounded-md border-gray-300 pl-7"></div></div></div><button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Registrar</button>`;
+            const volunteerAttendanceForm = `<div><label class="block text-sm font-medium text-gray-600">Selecciona el Workshop</label><select id="volunteer-ws-select-assist" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></select></div><div><label class="block text-sm font-medium text-gray-600">Cargar archivo de asistencia</label><input type="file" accept=".csv" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"><p class="mt-2 text-xs text-gray-500">El archivo debe ser formato .CSV y contener una columna "RUT".</p></div><button type="submit" class="w-full brand-bg-blue hover:bg-sky-600 text-white font-bold py-3 px-4 rounded-lg">Cargar</button>`;
+
+            document.getElementById('admin-workshop-form').innerHTML = adminWorkshopForm;
+            document.getElementById('admin-expense-form').innerHTML = expenseFormHTML('admin');
+            document.getElementById('staff-expense-form').innerHTML = expenseFormHTML('staff');
+            document.getElementById('volunteer-expense-form').innerHTML = expenseFormHTML('volunteer');
+            document.getElementById('volunteer-attendance-form').innerHTML = volunteerAttendanceForm;
+
+            populateSelects(document.querySelectorAll('#admin-ws-select, #staff-ws-select, #volunteer-ws-select, #volunteer-ws-select-assist'), workshopsData, 'id', 'name', 'Seleccione workshop');
+        }
+
+        function updateCostCenter(workshopId, targetInputId) {
+            const costCenterInput = document.getElementById(targetInputId);
+            if (!workshopId) { costCenterInput.value = ''; return; }
+            const selectedWorkshop = workshopsData.find(ws => ws.id == workshopId);
+            costCenterInput.value = selectedWorkshop ? selectedWorkshop.costCenter : '';
+        }
+
+        function populateSelects(selects, data, valueField, textField, prompt) {
+            const elements = (selects instanceof NodeList) ? selects : [selects];
+            elements.forEach(select => {
+                if (select) {
+                    select.innerHTML = `<option value="">-- ${prompt} --</option>`;
+                    data.forEach(item => {
+                        select.innerHTML += `<option value="${item[valueField]}">${item[textField]}</option>`;
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showView('profile-selector');
+            populateAllForms();
+            populateWorkshopsTable();
+            populateChangeLogTable();
+            initReportsModule('admin-reports-container');
+            initReportsModule('staff-reports-container');
+            switchAdminTab(document.querySelector('.main-tab'), 'dashboard');
+        });
+    </script>
+</body>
+</html>
